@@ -1,0 +1,118 @@
+#!/bin/sh
+# Keep this script POSIX
+# Avoid using bins from PREFIX as PREFIX will be deleted
+# Based on script from termux-restore
+
+unset LD_PRELOAD LD_LIBRARY_PATH
+
+export PREFIX=${PREFIX:-@TERMUX_PREFIX@}
+
+# Suppress verbose output by default
+export UNZIP_VERBOSE="-q"
+export LN_VERBOSE=""
+
+msg() {
+	echo "$*" >&2
+}
+
+check_bin() {
+	[ ! -e "$1" ] && echo "$1 ... NOT FOUND" && return
+	[ -z "$(command -v $1)" ] && echo "$1 ... UNUSABLE" && return
+	[ -n "$(command -v $1)" ] && echo "$1 ... OK"
+}
+
+show_usage() {
+	msg
+	msg "Usage: termux-install-bootstrap [-v] BOOTSTRAP_ZIP"
+	msg
+	msg "Script for installing Termux installation directory (\$PREFIX)"
+	msg "from the given bootstrap archive."
+	msg
+	msg "Currently \$PREFIX = $PREFIX"
+	msg
+	msg "It is expected that bootstrap ZIP archive was made using"
+	msg "'generate-bootstraps.sh' or 'build-bootstraps.sh.'"
+	msg
+	msg "On where to find, visit https://github.com/termux/termux-packages/releases"
+	msg
+	msg "On how to create, visit https://github.com/termux/termux-packages/wiki/For-maintainers"
+	msg
+	msg "This is in contrast to 'termux-restore' which restores from TAR archive."
+	msg
+	msg "This script is meant to run from '/system/bin/sh' or FAILSAFE MODE"
+	msg "and does not have any rollback nor resume mechanism. Be careful!"
+	msg
+	msg "These binaries must be present:"
+	msg "$(check_bin /system/bin/sh)"
+	msg "$(check_bin /system/bin/rm)"
+	msg "$(check_bin /system/bin/mkdir)"
+	msg "$(check_bin /system/bin/unzip)"
+	msg "$(check_bin /system/bin/sed)"
+	msg "$(check_bin /system/bin/ln)"
+	msg
+}
+
+if [ "$(id -u)" = "0" ]; then
+	msg "This script should not be used as root."
+	exit 1
+fi
+
+if [ $# -lt 1 ]; then
+	msg
+	msg "[!] Boostrap archive path is not specified."
+	show_usage
+	exit 1
+fi
+
+if [ $# -gt 1 ]; then
+	shift 1
+	msg
+	msg "[!] Got extra arguments: $*"
+	show_usage
+	exit 1
+fi
+
+case "$1" in
+	-\?|-h|--help|--usage)
+		show_usage
+		exit 0
+		;;
+	-v)
+		UNZIP_VERBOSE=""
+		LN_VERBOSE="-v"
+		;;
+	*)
+		BOOTSTRAP_ZIP_PATH=$1
+		;;
+esac
+
+if [ "$BOOTSTRAP_ZIP_PATH" != "-" ] && [ ! -e "$BOOTSTRAP_ZIP_PATH" ]; then
+	msg
+	msg "[!] File '$BOOTSTRAP_ZIP_PATH' does not exist."
+	msg
+	exit 1
+else
+	if [ "$BOOTSTRAP_ZIP_PATH" != "-" ] && [ ! -f "$BOOTSTRAP_ZIP_PATH" ]; then
+		msg
+		msg "[!] Path '$BOOTSTRAP_ZIP_PATH' is not a regular file."
+		msg
+		exit 1
+	fi
+fi
+
+msg "Deleting prefix $PREFIX ..."
+/system/bin/rm -fr "$PREFIX"
+msg
+
+msg "Extracting bootstrap archive ... This may take a while ..."
+/system/bin/mkdir "$PREFIX"
+/system/bin/unzip -o "$BOOTSTRAP_ZIP_PATH" -d "$PREFIX" ${UNZIP_VERBOSE}
+msg
+
+cd "$PREFIX"
+
+msg "Installing symbolic links in $PREFIX ... This may take a while ..."
+/system/bin/sed -e "s|\(.*\)←\(.*\)|/system/bin/ln -s ${LN_VERBOSE} \"\1\" \"\2\"|g" -i SYMLINKS.txt
+/system/bin/sh SYMLINKS.txt
+/system/bin/rm -f SYMLINKS.txt
+msg
