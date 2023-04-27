@@ -1,0 +1,125 @@
+diff --git a/src/runtime/src/coreclr/build-runtime.sh b/src/runtime/src/coreclr/build-runtime.sh
+index 06f79ec34b..611549d401 100755
+--- a/src/runtime/src/coreclr/build-runtime.sh
++++ b/src/runtime/src/coreclr/build-runtime.sh
+@@ -162,6 +162,7 @@ check_prereqs
+ 
+ # Build the coreclr (native) components.
+ __CMakeArgs="-DCLR_CMAKE_PGO_INSTRUMENT=$__PgoInstrument -DCLR_CMAKE_OPTDATA_PATH=$__PgoOptDataPath -DCLR_CMAKE_PGO_OPTIMIZE=$__PgoOptimize -DCLI_CMAKE_FALLBACK_OS=\"$__HostFallbackOS\" $__CMakeArgs"
++__CMakeArgs="$__CMakeArgs -DHAVE_COMPATIBLE_EXP_EXITCODE=0 -DCLR_CMAKE_HOST_UNIX=1"
+ 
+ if [[ "$__SkipConfigure" == 0 && "$__CodeCoverage" == 1 ]]; then
+     __CMakeArgs="-DCLR_CMAKE_ENABLE_CODE_COVERAGE=1 $__CMakeArgs"
+diff --git a/src/runtime/src/coreclr/clr.featuredefines.props b/src/runtime/src/coreclr/clr.featuredefines.props
+index 1bc919b6dc..e77924000c 100644
+--- a/src/runtime/src/coreclr/clr.featuredefines.props
++++ b/src/runtime/src/coreclr/clr.featuredefines.props
+@@ -40,6 +40,10 @@
+         <FeatureObjCMarshal>true</FeatureObjCMarshal>
+     </PropertyGroup>
+ 
++    <PropertyGroup Condition="'$(TargetsAndroid)' == 'true' OR '$(TargetsLinuxBionic)' == 'true'">
++        <FeatureEventTrace>false</FeatureEventTrace>
++    </PropertyGroup>
++
+     <PropertyGroup>
+         <DefineConstants Condition="'$(FeatureArrayStubAsIL)' == 'true'">$(DefineConstants);FEATURE_ARRAYSTUB_AS_IL</DefineConstants>
+         <DefineConstants Condition="'$(FeatureMulticastStubAsIL)' == 'true'">$(DefineConstants);FEATURE_MULTICASTSTUB_AS_IL</DefineConstants>
+diff --git a/src/runtime/src/coreclr/clrfeatures.cmake b/src/runtime/src/coreclr/clrfeatures.cmake
+index 85752b0d59..1f420f9895 100644
+--- a/src/runtime/src/coreclr/clrfeatures.cmake
++++ b/src/runtime/src/coreclr/clrfeatures.cmake
+@@ -2,10 +2,6 @@ if(CLR_CMAKE_TARGET_TIZEN_LINUX)
+   set(FEATURE_GDBJIT_LANGID_CS 1)
+ endif()
+ 
+-if(NOT DEFINED FEATURE_EVENT_TRACE)
+-  set(FEATURE_EVENT_TRACE 1)
+-endif(NOT DEFINED FEATURE_EVENT_TRACE)
+-
+ if(NOT DEFINED FEATURE_PERFTRACING AND FEATURE_EVENT_TRACE)
+   set(FEATURE_PERFTRACING 1)
+ endif(NOT DEFINED FEATURE_PERFTRACING AND FEATURE_EVENT_TRACE)
+diff --git a/src/runtime/src/coreclr/gc/gc.cpp b/src/runtime/src/coreclr/gc/gc.cpp
+index 86022c7055..9ec93dead2 100644
+--- a/src/runtime/src/coreclr/gc/gc.cpp
++++ b/src/runtime/src/coreclr/gc/gc.cpp
+@@ -28,6 +28,17 @@
+ #error this source file should not be compiled with DACCESS_COMPILE!
+ #endif //DACCESS_COMPILE
+ 
++// undeclared identifier
++#ifndef GCEventFireCommittedUsage_V1
++#define GCEventFireCommittedUsage_V1(...) 0
++#endif
++#ifndef GCEventFireHeapCountSample_V1
++#define GCEventFireHeapCountSample_V1(...) 0
++#endif
++#ifndef GCEventFireHeapCountTuning_V1
++#define GCEventFireHeapCountTuning_V1(...) 0
++#endif
++
+ // We just needed a simple random number generator for testing.
+ class gc_rand
+ {
+diff --git a/src/runtime/src/coreclr/inc/crosscomp.h b/src/runtime/src/coreclr/inc/crosscomp.h
+index 7d105a5ac1..e67fa3cb22 100644
+--- a/src/runtime/src/coreclr/inc/crosscomp.h
++++ b/src/runtime/src/coreclr/inc/crosscomp.h
+@@ -721,6 +721,14 @@ typedef struct _T_KNONVOLATILE_CONTEXT_POINTERS {
+ #define DAC_CS_NATIVE_DATA_SIZE 56
+ #elif defined(__sun) && defined(TARGET_AMD64)
+ #define DAC_CS_NATIVE_DATA_SIZE 48
++#elif defined(TARGET_ANDROID) && defined(TARGET_ARM)
++#define DAC_CS_NATIVE_DATA_SIZE 80
++#elif defined(TARGET_ANDROID) && defined(TARGET_ARM64)
++#define DAC_CS_NATIVE_DATA_SIZE 104
++#elif defined(TARGET_ANDROID) && defined(TARGET_X86)
++#define DAC_CS_NATIVE_DATA_SIZE 76
++#elif defined(TARGET_ANDROID) && defined(TARGET_AMD64)
++#define DAC_CS_NATIVE_DATA_SIZE 96
+ #else
+ #warning
+ #error  DAC_CS_NATIVE_DATA_SIZE is not defined for this architecture. This should be same value as PAL_CS_NATIVE_DATA_SIZE (aka sizeof(PAL_CS_NATIVE_DATA)).
+diff --git a/src/runtime/src/coreclr/minipal/Unix/doublemapping.cpp b/src/runtime/src/coreclr/minipal/Unix/doublemapping.cpp
+index cb65e5e284..ea3f9704b5 100644
+--- a/src/runtime/src/coreclr/minipal/Unix/doublemapping.cpp
++++ b/src/runtime/src/coreclr/minipal/Unix/doublemapping.cpp
+@@ -14,7 +14,7 @@
+ #include <assert.h>
+ #include <limits.h>
+ #include <errno.h>
+-#if defined(TARGET_LINUX) && !defined(MFD_CLOEXEC)
++#if (defined(TARGET_LINUX) && !defined(MFD_CLOEXEC)) || defined(TARGET_ANDROID)
+ #include <linux/memfd.h>
+ #include <sys/syscall.h> // __NR_memfd_create
+ #define memfd_create(...) syscall(__NR_memfd_create, __VA_ARGS__)
+diff --git a/src/runtime/src/coreclr/vm/eventpipeadaptertypes.h b/src/runtime/src/coreclr/vm/eventpipeadaptertypes.h
+index f473bde104..bccc4a0760 100644
+--- a/src/runtime/src/coreclr/vm/eventpipeadaptertypes.h
++++ b/src/runtime/src/coreclr/vm/eventpipeadaptertypes.h
+@@ -4,12 +4,9 @@
+ #ifndef __EVENTPIPE_ADAPTER_TYPES_H__
+ #define __EVENTPIPE_ADAPTER_TYPES_H__
+ 
+-#if defined(FEATURE_PERFTRACING)
+-
+ typedef struct _EventFilterDescriptor EventFilterDescriptor;
+ typedef struct _EventPipeBufferList EventPipeBufferList;
+ typedef struct _EventPipeProvider EventPipeProvider;
+ typedef struct _EventPipeSession EventPipeSession;
+ 
+-#endif // FEATURE_PERFTRACING
+ #endif // __EVENTPIPE_ADAPTER_TYPES_H__
+diff --git a/src/runtime/src/mono/mono.proj b/src/runtime/src/mono/mono.proj
+index 3122cdf153..398c2e2045 100644
+--- a/src/runtime/src/mono/mono.proj
++++ b/src/runtime/src/mono/mono.proj
+@@ -738,6 +738,7 @@
+       <MonoAotOffsetsFile>$(MonoObjCrossDir)offsets-wasm32-unknown-none.h</MonoAotOffsetsFile>
+       <MonoLibClang Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(MonoLLVMDir)/$(BuildArchitecture)/lib/libclang.dylib</MonoLibClang>
+       <MonoLibClang Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(MonoLLVMDir)/$(BuildArchitecture)/lib/libclang.so</MonoLibClang>
++      <MonoLibClang Condition="$([MSBuild]::IsOSPlatform('Android'))">$(MonoLLVMDir)/$(BuildArchitecture)/lib/libclang.so</MonoLibClang>
+       <MonoLibClang Condition="$([MSBuild]::IsOSPlatform('Windows'))">$([MSBuild]::NormalizePath('$(MonoLLVMDir)', '$(BuildArchitecture)', 'bin', 'libclang.dll'))</MonoLibClang>
+       <_ForceRelease Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(TargetArchitecture)' == 'wasm' and '$(Configuration)' == 'Debug'">true</_ForceRelease>
+     </PropertyGroup>

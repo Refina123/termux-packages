@@ -1,6 +1,7 @@
 bionic-host
 clvk
 dart
+dotnet8.0
 firefox
 libllvm
 python-torch
