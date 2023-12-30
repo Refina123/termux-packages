@@ -15,7 +15,7 @@ termux_step_pre_configure() {
 
 	export ARCH_NAME_RAW=
 	export CPU_TARGET=
-	case "${TARGET_ARCH}" in
+	case "${TERMUX_ARCH}" in
 	aarch64) ARCH_NAME_RAW=arm64 ;;
 	arm) ARCH_NAME_RAW=armv7l ;;
 	i686) ARCH_NAME_RAW=i686 ;;
