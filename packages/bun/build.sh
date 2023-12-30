@@ -13,7 +13,15 @@ termux_step_pre_configure() {
 	termux_setup_nodejs
 	termux_setup_zig
 
-	export CPU_TARGET="${ZIG_TARGET_NAME}"
+	export ARCH_NAME_RAW=
+	export CPU_TARGET=
+	case "${TARGET_ARCH}" in
+	aarch64) ARCH_NAME_RAW=arm64 ;;
+	arm) ARCH_NAME_RAW=armv7l ;;
+	i686) ARCH_NAME_RAW=i686 ;;
+	x86_64) ARCH_NAME_RAW=x86_64 ;;
+	esac
+	export CPU_TARGET="generic"
 
 	mkdir -p "${TERMUX_PKG_BUILDDIR}/src/deps"
 	cp -f "${TERMUX_PKG_SRCDIR}/Makefile" "${TERMUX_PKG_BUILDDIR}"
@@ -47,6 +55,5 @@ termux_step_pre_configure() {
 
 	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+="
 	-DBUN_EXECUTABLE=echo
-	-DCPU_TARGET=${ZIG_TARGET_NAME}
 	"
 }
