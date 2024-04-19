@@ -12,6 +12,8 @@ TERMUX_PKG_AUTO_UPDATE=true
 termux_step_pre_configure() {
 	termux_setup_rust
 
+	rm -fv Cargo.lock
+
 	: "${CARGO_HOME:=$HOME/.cargo}"
 	export CARGO_HOME
 
@@ -28,7 +30,11 @@ termux_step_pre_configure() {
 			-i "${f}"
 	done
 
+	grep android-activity -nHR $CARGO_HOME/registry/src/*/*/Cargo.toml
+
 	#CFLAGS="$CPPFLAGS"
+
+	rm -fv Cargo.lock
 }
 
 termux_step_make() {
