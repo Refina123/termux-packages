@@ -22,11 +22,11 @@ termux_step_pre_configure() {
 	local f
 	for f in $CARGO_HOME/registry/src/*/winit-*/Cargo.toml; do
 		echo "Patching ${f}"
-		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e 's/^android/#android/g' -e 's/^ndk/#ndk/g' "${f}") || :
+		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e '/^android/d' -e '/^ndk/d' "${f}") || :
 		sed \
 			-e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' \
-			-e 's/^android/#android/g' \
-			-e 's/^ndk/#ndk/g' \
+			-e '/^android/d' \
+			-e '/^ndk/d' \
 			-i "${f}"
 	done
 
