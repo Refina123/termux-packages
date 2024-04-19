@@ -23,8 +23,8 @@ termux_step_pre_configure() {
 	local f
 	for f in \
 		$CARGO_HOME/registry/src/*/winit-*/Cargo.toml \
-		$CARGO_HOME/registry/src/*/glutin-winit-*/Cargo.toml \
 		; do
+		cat $f
 		echo "Patching ${f}"
 		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e 's/^android/#android/g' -e 's/^ndk/#ndk/g' "${f}") || :
 		sed \
@@ -34,7 +34,7 @@ termux_step_pre_configure() {
 			-i "${f}"
 	done
 
-	grep android-activity -nHR $CARGO_HOME/registry/src/*/*/Cargo.toml
+	grep android -nHR $CARGO_HOME/registry/src/*/*/Cargo.toml
 
 	#CFLAGS="$CPPFLAGS"
 
@@ -43,7 +43,7 @@ termux_step_pre_configure() {
 }
 
 termux_step_make() {
-	cargo build --jobs "${TERMUX_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release --no-default-features --features=x11,wayland
+	cargo build --jobs "${TERMUX_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release
 }
 
 termux_step_make_install() {
