@@ -39,7 +39,7 @@ termux_step_pre_configure() {
 	#CFLAGS="$CPPFLAGS"
 
 	rm -fv Cargo.lock
-	cargo update --target "$CARGO_TARGET_NAME" --offline
+	cargo update --offline
 	cargo tree --target "$CARGO_TARGET_NAME" --offline
 }
 
