@@ -21,13 +21,16 @@ termux_step_pre_configure() {
 	cargo tree --target "$CARGO_TARGET_NAME"
 
 	local f
-	for f in $CARGO_HOME/registry/src/*/winit-*/Cargo.toml; do
+	for f in \
+		$CARGO_HOME/registry/src/*/winit-*/Cargo.toml \
+		$CARGO_HOME/registry/src/*/glutin-winit-*/Cargo.toml \
+		; do
 		echo "Patching ${f}"
-		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e '/^android/d' -e '/^ndk/d' "${f}") || :
+		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e 's/^android/#android/g' -e 's/^ndk/#ndk/g' "${f}") || :
 		sed \
 			-e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' \
-			-e '/^android/d' \
-			-e '/^ndk/d' \
+			-e 's/^android/#android/g' \
+			-e 's/^ndk/#ndk/g' \
 			-i "${f}"
 	done
 
@@ -36,7 +39,8 @@ termux_step_pre_configure() {
 	#CFLAGS="$CPPFLAGS"
 
 	rm -fv Cargo.lock
-	cargo tree --target "$CARGO_TARGET_NAME"
+	cargo update --target "$CARGO_TARGET_NAME" --offline
+	cargo tree --target "$CARGO_TARGET_NAME" --offline
 }
 
 termux_step_make() {
