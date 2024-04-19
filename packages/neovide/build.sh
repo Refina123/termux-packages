@@ -20,8 +20,8 @@ termux_step_pre_configure() {
 	local f
 	for f in $CARGO_HOME/registry/src/*/winit-*/Cargo.toml; do
 		echo "Patching ${f}"
-		sed -e 's/target_os = "android"/(not(target_os = "android"))/g' -i "${f}"
-		sed -e 's/target_os = \"android\"/(not(target_os = \"android\"))/g' -i "${f}"
+		diff -u "${f}" <(sed 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' "${f}")
+		sed 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -i "${f}"
 	done
 
 	grep android -nHR $CARGO_HOME/registry/src/*/*/Cargo.toml
