@@ -26,6 +26,9 @@ termux_step_pre_configure() {
 		; do
 		cp -fv ${f}{.orig,}
 		cat $f
+		sed -e 's/target_os = "android"/not(target_os = "android")/g' -i $f
+		sed -e 's/= "0.5.0"$/= { version = "0.5.0", default-features = false }/g' -i $f
+		diff -u $f{.orig,}
 	done
 
 	grep android -nHR $CARGO_HOME/registry/src/*/*/Cargo.toml
