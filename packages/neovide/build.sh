@@ -25,14 +25,15 @@ termux_step_pre_configure() {
 		$CARGO_HOME/registry/src/*/winit-*/Cargo.toml \
 		; do
 		cat $f
+		local SED_ARGS="
+		-e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g'
+		-e 's/^android/#android/g'
+		-e 's/^ndk/#ndk/g'
+		-e '/.*"android-native-activity".*/d'
+		"
 		echo "Patching ${f}"
-		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e 's/^android/#android/g' -e 's/^ndk/#ndk/g' -e '/.*"android-native-activity".*/d' "${f}") || :
-		sed \
-			-e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' \
-			-e 's/^android/#android/g' \
-			-e 's/^ndk/#ndk/g' \
-			-e '/.*"android-native-activity".*/d' \
-			-i "${f}"
+		diff -u "${f}" <(sed ${SED_ARGS} "${f}") || :
+		sed ${SED_ARGS} -i "${f}"
 	done
 
 	grep android -nHR $CARGO_HOME/registry/src/*/*/Cargo.toml
