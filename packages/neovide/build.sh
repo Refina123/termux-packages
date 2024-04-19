@@ -18,7 +18,7 @@ termux_step_pre_configure() {
 	export CARGO_HOME
 
 	cargo fetch --target "${CARGO_TARGET_NAME}"
-	cargo tree
+	cargo tree --target "$CARGO_TARGET_NAME"
 
 	local f
 	for f in $CARGO_HOME/registry/src/*/winit-*/Cargo.toml; do
@@ -36,7 +36,7 @@ termux_step_pre_configure() {
 	#CFLAGS="$CPPFLAGS"
 
 	rm -fv Cargo.lock
-	cargo tree
+	cargo tree --target "$CARGO_TARGET_NAME"
 }
 
 termux_step_make() {
