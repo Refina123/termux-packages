@@ -39,12 +39,11 @@ termux_step_pre_configure() {
 	#CFLAGS="$CPPFLAGS"
 
 	rm -fv Cargo.lock
-	cargo update --offline
-	cargo tree --target "$CARGO_TARGET_NAME" --offline
+	cargo tree --target "$CARGO_TARGET_NAME"
 }
 
 termux_step_make() {
-	cargo build --jobs "${TERMUX_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release
+	cargo build --jobs "${TERMUX_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release --no-default-features --features=x11,wayland
 }
 
 termux_step_make_install() {
