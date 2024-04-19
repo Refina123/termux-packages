@@ -26,11 +26,12 @@ termux_step_pre_configure() {
 		; do
 		cat $f
 		echo "Patching ${f}"
-		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e 's/^android/#android/g' -e 's/^ndk/#ndk/g' "${f}") || :
+		diff -u "${f}" <(sed -e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' -e 's/^android/#android/g' -e 's/^ndk/#ndk/g' -e '/.*"android-native-activity".*/d' "${f}") || :
 		sed \
 			-e 's/target_os = \\"android\\"/not(target_os = \\"android\\")/g' \
 			-e 's/^android/#android/g' \
 			-e 's/^ndk/#ndk/g' \
+			-e '/.*"android-native-activity".*/d' \
 			-i "${f}"
 	done
 
