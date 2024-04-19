@@ -25,7 +25,6 @@ termux_step_pre_configure() {
 		$CARGO_HOME/registry/src/*/winit-*/Cargo.toml \
 		; do
 		cp -fv ${f}{.orig,}
-		cat $f
 		sed -e 's/target_os = "android"/not(target_os = "android")/g' -i $f
 		sed -e 's/= "0.5.0"$/= { version = "0.5.0", default-features = false }/g' -i $f
 		diff -u $f{.orig,} || :
@@ -36,11 +35,12 @@ termux_step_pre_configure() {
 	#CFLAGS="$CPPFLAGS"
 
 	rm -fv Cargo.lock
-	cargo tree --target "$CARGO_TARGET_NAME"
+	cargo update --offline
+	cargo tree --target "$CARGO_TARGET_NAME" --offline
 }
 
 termux_step_make() {
-	cargo build --jobs "${TERMUX_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release
+	cargo build --jobs "${TERMUX_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release --offline
 }
 
 termux_step_make_install() {
