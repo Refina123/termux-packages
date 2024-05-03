@@ -195,6 +195,8 @@ termux_step_make_install() {
 	$TERMUX_PKG_SRCDIR/x.py install --stage 1 --target x86_64-linux-android
 	$TERMUX_PKG_SRCDIR/x.py install --stage 1 std --target wasm32-unknown-unknown
 	$TERMUX_PKG_SRCDIR/x.py install --stage 1 std --target wasm32-wasi
+	$TERMUX_PKG_SRCDIR/x.py install --stage 1 std --target wasm32-wasip1
+	$TERMUX_PKG_SRCDIR/x.py install --stage 1 std --target wasm32-wasip2
 
 	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target aarch64-linux-android
 	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target armv7-linux-androideabi
@@ -202,6 +204,8 @@ termux_step_make_install() {
 	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target x86_64-linux-android
 	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target wasm32-unknown-unknown
 	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target wasm32-wasi
+	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target wasm32-wasip1
+	$TERMUX_PKG_SRCDIR/x.py dist rustc-dev --host $CARGO_TARGET_NAME --target wasm32-wasip2
 	fi
 
 	tar -xvf build/dist/rustc-dev-$TERMUX_PKG_VERSION-$CARGO_TARGET_NAME.tar.gz
