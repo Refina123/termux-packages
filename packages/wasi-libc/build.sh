@@ -16,7 +16,7 @@ termux_step_host_build() {
 	termux_setup_cmake
 	termux_setup_ninja
 
-	make -C $TERMUX_PKG_BUILDDIR -j $TERMUX_MAKE_PROCESSES install
+	make -C $TERMUX_PKG_BUILDDIR -j $TERMUX_MAKE_PROCESSES package
 }
 
 termux_step_pre_configure() {
