@@ -17,6 +17,7 @@ termux_step_host_build() {
 	termux_setup_ninja
 
 	make -C $TERMUX_PKG_BUILDDIR -j $TERMUX_MAKE_PROCESSES package
+	echo HOSTBUILD FINISH
 }
 
 termux_step_pre_configure() {
@@ -24,6 +25,7 @@ termux_step_pre_configure() {
 	termux_setup_ninja
 	termux_setup_rust
 
+	if ! :; then
 	if [[ "${TERMUX_ON_DEVICE_BUILD}" == "false" ]]; then
 		# https://github.com/android/ndk/issues/1960
 		# use NDK r26 new wasm target support to build
@@ -59,6 +61,7 @@ termux_step_pre_configure() {
 		-e "/^set(CMAKE_NM .*/d" \
 		-e "/^set(CMAKE_RANLIB .*/d" \
 		-i wasi-sdk.cmake wasi-sdk-pthread.cmake
+	fi
 
 	mkdir -p build
 	touch build/llvm.BUILT # use our own LLVM
