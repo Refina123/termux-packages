@@ -16,7 +16,12 @@ termux_step_host_build() {
 	termux_setup_cmake
 	termux_setup_ninja
 
-	make -C $TERMUX_PKG_BUILDDIR -j $TERMUX_MAKE_PROCESSES package
+	pushd $TERMUX_PKG_BUILDDIR
+	mkdir -p build
+	touch build/wasm-component-ld.BUILT # build ourselves
+
+	make -j $TERMUX_MAKE_PROCESSES package
+	popd
 	echo HOSTBUILD FINISH
 }
 
