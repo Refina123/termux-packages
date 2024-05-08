@@ -72,6 +72,10 @@ termux_step_pre_configure() {
 	python3 ./version.py dump | tee build/VERSION
 }
 
+termux_step_make() {
+	:
+}
+
 termux_step_make_install() {
 	cargo install wasm-component-ld@0.1.5 --target "${CARGO_TARGET_NAME}" --root "${TERMUX_PREFIX}"
 
