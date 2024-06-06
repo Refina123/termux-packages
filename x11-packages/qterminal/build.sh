@@ -8,6 +8,3 @@ TERMUX_PKG_SHA256=28f00a5c8c31d9108a54b7dcbf87d46f14e460492d2c56e3ecf5b5c3bba405
 TERMUX_PKG_DEPENDS="libc++, qt6-qtbase, qtermwidget"
 TERMUX_PKG_BUILD_DEPENDS="lxqt-build-tools, qt6-qttools-cross-tools"
 TERMUX_PKG_AUTO_UPDATE=true
-TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
--DQt6LinguistTools_DIR=${TERMUX_PREFIX}/opt/qt6/cross/lib/cmake/Qt6LinguistTools
-"
